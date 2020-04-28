@@ -11,7 +11,13 @@ module.exports = (location, callback) => {
     } else if (body.error) {
       callback('Unable to find the coordinates', undefined);
     } else {
-      callback(undefined, `It is currently ${body.main.temp} degrees out.`);
+      callback(
+        undefined,
+        `It is currently ${body.main.temp} degrees out. 
+            Pressure: ${body.main.pressure}
+            Humidity: ${body.main.humidity}
+        `
+      );
     }
   });
 };

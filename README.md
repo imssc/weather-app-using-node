@@ -1,70 +1,211 @@
-# Getting Started with Create React App
+# Classy Weather
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A lightweight weather application built with React that lets users search for a location and view a multi-day forecast.
 
-## Available Scripts
+The project focuses on building a small, asynchronous React application around real API data, with an emphasis on state management, component composition, data transformation, and predictable UI updates.
 
-In the project directory, you can run:
+## Overview
 
-### `npm start`
+The application takes a location entered by the user, resolves it to geographic coordinates through the Open-Meteo Geocoding API, and then uses those coordinates to retrieve the corresponding weather forecast.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+The resulting data is transformed into a format suitable for the UI and rendered as a simple multi-day forecast.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```text
+Location
+   ↓
+Geocoding API
+   ↓
+Latitude / Longitude / Timezone
+   ↓
+Weather API
+   ↓
+Forecast Data
+   ↓
+React State
+   ↓
+UI
+```
 
-### `npm test`
+## Key Features
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+* Search weather by location
+* Location geocoding before requesting forecast data
+* Multi-day temperature forecast
+* Weather condition icons based on WMO weather codes
+* Loading state while requests are in progress
+* Basic handling for invalid or unavailable locations
+* Persists the last searched location using `localStorage`
+* Responsive, component-based UI
 
-### `npm run build`
+## Technical Approach
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### State-driven UI
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+The application keeps the current location, loading state, display location, and forecast data in React state.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+User input updates the location state, which triggers the weather lookup. Once the asynchronous requests complete, the resulting data is stored in state and React updates the UI.
 
-### `npm run eject`
+This keeps the rendered interface derived from the current application state rather than manually manipulating the DOM.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Two-step API flow
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Weather data cannot be requested from a city name alone in the forecast endpoint, so the application uses a two-step request:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+1. Resolve the location using the Open-Meteo Geocoding API.
+2. Use the returned latitude, longitude, and timezone to request the forecast.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+This also keeps the responsibility of location resolution separate from forecast retrieval.
 
-## Learn More
+### Asynchronous data handling
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+The weather lookup is implemented as an asynchronous operation using `async/await`.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+The request lifecycle is represented explicitly through state:
 
-### Code Splitting
+```text
+Request starts
+     ↓
+isLoading = true
+     ↓
+Fetch location
+     ↓
+Fetch forecast
+     ↓
+Update weather state
+     ↓
+isLoading = false
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Errors are caught at the request boundary so a failed lookup does not leave the application in a loading state.
 
-### Analyzing the Bundle Size
+### Component composition
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+The UI is split into focused components:
 
-### Making a Progressive Web App
+```text
+App
+├── Input
+└── Weather
+    └── Day
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+`App` coordinates the application state and data fetching.
 
-### Advanced Configuration
+`Input` handles the location input and communicates changes back to `App`.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+`Weather` receives forecast data and is responsible for rendering the forecast.
 
-### Deployment
+`Day` represents an individual forecast entry.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+This keeps the data-fetching and state-management concerns separate from the individual pieces of the UI.
 
-### `npm run build` fails to minify
+### Data transformation
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+The API returns weather condition codes rather than presentation-ready descriptions or icons.
+
+The application maps those WMO codes to weather symbols before rendering them.
+
+It also formats dates and converts country codes into display-friendly flags.
+
+This keeps API-specific representations from leaking directly into the presentation layer.
+
+### Persistence
+
+The last searched location is stored in `localStorage` and restored when the application loads.
+
+This provides a small but useful persistence layer without introducing a backend or external state-management solution.
+
+## Tech Stack
+
+* React 18
+* JavaScript (ES6+)
+* Create React App
+* CSS
+* Open-Meteo Geocoding API
+* Open-Meteo Forecast API
+* Browser `localStorage`
+
+## Project Structure
+
+```text
+src/
+├── App.js
+├── Counter.js
+├── index.css
+├── index.js
+└── starter.js
+
+public/
+└── ...
+```
+
+The primary application logic lives in `App.js`, where the application state, API integration, data transformation, and main UI composition are coordinated.
+
+> `Counter.js` and `starter.js` are retained as supporting/learning files from the original project setup and are not part of the main weather application flow.
+
+## Running Locally
+
+Clone the repository:
+
+```bash
+git clone https://github.com/imssc/weather-app-using-node.git
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the development server:
+
+```bash
+npm start
+```
+
+The application will be available at:
+
+```text
+http://localhost:3000
+```
+
+Create a production build with:
+
+```bash
+npm run build
+```
+
+## API
+
+Weather information is provided by [Open-Meteo](https://open-meteo.com/).
+
+The application uses:
+
+* Open-Meteo Geocoding API for location lookup
+* Open-Meteo Forecast API for daily weather data
+
+No API key is required for the current implementation.
+
+## What This Project Demonstrates
+
+This project was built as a practical exercise in working with React and external data rather than as a collection of isolated UI examples.
+
+The main areas explored were:
+
+* React component composition
+* State management
+* Controlled inputs
+* Props and component communication
+* Asynchronous API requests
+* Loading and error states
+* Conditional rendering
+* Data transformation
+* Browser storage
+* Lifecycle-driven application behavior
+* Rendering collections from API data
+
+## Notes
+
+The application is intentionally small. The goal was to understand the complete path from user input to an external API request and finally to a state-driven React UI.
+
+Potential next steps would include migrating the implementation to functional components and hooks, introducing a dedicated API/service layer, adding automated tests, improving accessibility, and eventually moving the data-fetching concerns toward a server-state solution such as TanStack Query.
